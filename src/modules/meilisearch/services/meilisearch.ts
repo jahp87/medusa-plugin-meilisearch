@@ -14,7 +14,8 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
 
   constructor(container: any, options: MeilisearchPluginOptions) {
     super(container, options)
-
+    console.log('container in services', container)
+    console.log('*****************************************************************************************')
     this.config_ = options
 
     if (process.env.NODE_ENV !== 'development') {
