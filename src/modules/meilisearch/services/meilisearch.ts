@@ -92,17 +92,17 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     }
   }
 
-  getTransformedDocuments(type: string, documents: any[]) {
+  async getTransformedDocuments(type: string, documents: any[]) {
     if (!documents?.length) {
       return []
     }
 
     switch (type) {
       case SearchUtils.indexTypes.PRODUCTS:
-        const productsTransformer =
-          this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
+        const productsTransformer = transformProduct(documents, super.container);
+         
 
-        return documents.map(productsTransformer)
+        return documents.map(await productsTransformer)
       default:
         return documents
     }

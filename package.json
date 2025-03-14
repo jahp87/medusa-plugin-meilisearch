@@ -30,6 +30,7 @@
     "format:fix": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --cache --cache-strategy content --log-level warn"
   },
   "dependencies": {
+    "@rokmohar/medusa-plugin-meilisearch": "file:",
     "meilisearch": "^0.48.2"
   },
   "devDependencies": {
