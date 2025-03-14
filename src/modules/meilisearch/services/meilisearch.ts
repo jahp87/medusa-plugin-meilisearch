@@ -100,7 +100,7 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
 
     switch (type) {
       case SearchUtils.indexTypes.PRODUCTS:
-        console.log('container', super.container)
+        console.log('container in methods', super.container)
         const productsTransformer = transformProduct(documents, super.container)
 
         return documents.map(await productsTransformer)

@@ -1528,7 +1528,7 @@
     wrap-ansi-cjs "npm:wrap-ansi@^7.0.0"
 
 "@jahp87/medusa-plugin-meilisearch@file:":
-  version "1.0.6"
+  version "1.0.7"
   resolved "file:"
   dependencies:
     "@jahp87/medusa-plugin-meilisearch" "file:"
@@ -4029,7 +4029,7 @@
   integrity sha512-so+DHzZKsoOcoXrILB4rqDkMDy7NLMErRdOxvzvOKb507YINKUP4Di+shbTZDhSE/pBZ+vr7XGIpcOO0VLSA+Q==
 
 "@rokmohar/medusa-plugin-meilisearch@file:":
-  version "1.0.6"
+  version "1.0.7"
   resolved "file:"
   dependencies:
     "@jahp87/medusa-plugin-meilisearch" "file:"
