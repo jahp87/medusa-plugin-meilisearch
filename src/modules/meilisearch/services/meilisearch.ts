@@ -3,6 +3,7 @@ import { SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
 import { transformProduct } from '../utils/transformer'
+import { container } from '@medusajs/framework'
 
 export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   static identifier = 'index-meilisearch'
@@ -46,13 +47,13 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   async addDocuments(indexName: string, documents: any, type: string) {
     const transformedDocuments = this.getTransformedDocuments(type, documents)
 
-    return await this.client_.index(indexName).addDocuments(transformedDocuments, { primaryKey: 'id' })
+    return await this.client_.index(indexName).addDocuments(await transformedDocuments, { primaryKey: 'id' })
   }
 
   async replaceDocuments(indexName: string, documents: any, type: string) {
     const transformedDocuments = this.getTransformedDocuments(type, documents)
 
-    return await this.client_.index(indexName).addDocuments(transformedDocuments, { primaryKey: 'id' })
+    return await this.client_.index(indexName).addDocuments(await transformedDocuments, { primaryKey: 'id' })
   }
 
   async deleteDocument(indexName: string, documentId: string) {
@@ -93,19 +94,40 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     }
   }
 
-  async getTransformedDocuments(type: string, documents: any[]) {
+  getTransformedDocuments(type: string, documents: any[]) {
     if (!documents?.length) {
       return []
     }
 
     switch (type) {
       case SearchUtils.indexTypes.PRODUCTS:
-        console.log('container in methods', super.container)
-        const productsTransformer = transformProduct(documents, super.container)
+        const productsTransformer =
+          this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
 
-        return documents.map(await productsTransformer)
+        return documents
+          .map((document) => ({
+            document,
+            container,
+          }))
+          .map(productsTransformer)
       default:
         return documents
     }
   }
+
+  // async getTransformedDocuments(type: string, documents: any[]) {
+  //   if (!documents?.length) {
+  //     return []
+  //   }
+
+  //   switch (type) {
+  //     case SearchUtils.indexTypes.PRODUCTS:
+  //       console.log('container in methods', { container })
+  //       const productsTransformer = transformProduct(documents, container)
+
+  //       return documents.map(await productsTransformer)
+  //     default:
+  //       return documents
+  //   }
+  // }
 }

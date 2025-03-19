@@ -1,6 +1,6 @@
 {
   "name": "@jahp87/medusa-plugin-meilisearch",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "description": "Medusa plugin for Meilisearch integration for Medusa 2",
   "author": "Julio Hernandez <jahp8719@gmail.com>",
   "license": "MIT",
@@ -37,7 +37,7 @@
   "devDependencies": {
     "@medusajs/admin-sdk": "^2.4.0",
     "@medusajs/cli": "^2.4.0",
-    "@medusajs/framework": "^2.4.0",
+    "@medusajs/framework": "^2.6.1",
     "@medusajs/icons": "^2.4.0",
     "@medusajs/medusa": "^2.4.0",
     "@medusajs/test-utils": "^2.4.0",
@@ -63,7 +63,7 @@
     "react": "^18",
     "react-dom": "^18",
     "ts-node": "^10.9.2",
-    "typescript": "^5",
+    "typescript": "^5.8.2",
     "vite": "^5.2.11",
     "yalc": "^1.0.0-pre.53"
   },
