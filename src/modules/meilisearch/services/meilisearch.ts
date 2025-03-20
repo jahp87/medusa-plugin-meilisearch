@@ -93,24 +93,36 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     }
   }
 
-  getTransformedDocuments(type: string, documents: any[]) {
+  getTransformedDocuments(type: string, documents: any[]): any[] {
+    // Si no hay documentos, retornar un array vacío
     if (!documents?.length) {
       return []
     }
 
+    // Función para manejar la transformación de productos
+    const handleProductsTransformation = () => {
+      // Obtener el transformer desde la configuración o usar uno por defecto
+      const productsTransformer =
+        this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
+
+      // Crear el contenedor
+      const container = createMedusaContainer()
+
+      console.log('Contenedor creado:', container)
+
+      // Transformar los documentos en un solo paso
+      return documents.map((document) => {
+        const transformedData = { document, container }
+        return productsTransformer(transformedData)
+      })
+    }
+
+    // Manejar diferentes tipos de transformación
     switch (type) {
       case SearchUtils.indexTypes.PRODUCTS:
-        const productsTransformer =
-          this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
-        const container = createMedusaContainer()
-        console.log('aquiiiiiiiiiiiiii', container)
-        return documents
-          .map((document) => ({
-            document,
-            container,
-          }))
-          .map(productsTransformer)
+        return handleProductsTransformation()
       default:
+        // Por defecto, retornar los documentos sin cambios
         return documents
     }
   }
