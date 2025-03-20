@@ -102,14 +102,10 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     switch (type) {
       case SearchUtils.indexTypes.PRODUCTS:
         const productsTransformer =
-          this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
-
-        return documents
-          .map((document) => ({
-            document,
-            container,
-          }))
-          .map(productsTransformer)
+          this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer?.bind(this, container) ??
+          transformProduct
+        console.log('aquiiiiiiiiiiiiii', container)
+        return documents.map(productsTransformer)
       default:
         return documents
     }
