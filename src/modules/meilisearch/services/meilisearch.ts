@@ -1,9 +1,8 @@
 import { SearchTypes } from '@medusajs/types'
-import { SearchUtils } from '@medusajs/utils'
+import { createMedusaContainer, SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
 import { transformProduct } from '../utils/transformer'
-import { container } from '@medusajs/framework'
 
 export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   static identifier = 'index-meilisearch'
@@ -102,10 +101,15 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     switch (type) {
       case SearchUtils.indexTypes.PRODUCTS:
         const productsTransformer =
-          this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer?.bind(this, container) ??
-          transformProduct
+          this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
+        const container = createMedusaContainer()
         console.log('aquiiiiiiiiiiiiii', container)
-        return documents.map(productsTransformer)
+        return documents
+          .map((document) => ({
+            document,
+            container,
+          }))
+          .map(productsTransformer)
       default:
         return documents
     }
