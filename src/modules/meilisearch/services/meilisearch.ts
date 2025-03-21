@@ -1,9 +1,13 @@
-import { MedusaContainer, SearchTypes } from '@medusajs/types'
-import { createMedusaContainer, SearchUtils } from '@medusajs/utils'
+import { Logger, MedusaContainer, SearchTypes } from '@medusajs/types'
+import { SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
 import { transformProduct } from '../utils/transformer'
-import { container } from '@medusajs/framework'
+
+type InjectedDependencies = {
+  logger: Logger
+  query: any
+}
 
 export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   static identifier = 'index-meilisearch'
@@ -12,15 +16,20 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
 
   protected readonly config_: MeilisearchPluginOptions
   protected readonly client_: MeiliSearch
+  protected logger: Logger
+  protected query: any
 
   constructor(
     private container: MedusaContainer,
     options: MeilisearchPluginOptions,
+    { logger, query }: InjectedDependencies,
   ) {
     super(container, options)
-    console.log('container in services', container)
+    console.log('container in services', query)
     console.log('*****************************************************************************************')
     this.config_ = options
+    this.logger = logger
+    this.query = query
 
     if (process.env.NODE_ENV !== 'development') {
       if (!options.config?.apiKey) {
@@ -118,7 +127,7 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
 
       // Transformar los documentos en un solo paso
       return documents.map((document) => {
-        const transformedData = { document, container: this.container }
+        const transformedData = { document, query: this.query }
         return productsTransformer(transformedData)
       })
     }
