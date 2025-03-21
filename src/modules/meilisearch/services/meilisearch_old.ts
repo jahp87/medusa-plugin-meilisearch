@@ -11,12 +11,18 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
 
   protected readonly config_: MeilisearchPluginOptions
   protected readonly client_: MeiliSearch
+  protected query
 
-  constructor(container: any, options: MeilisearchPluginOptions) {
-    super(container, options)
-
+  /**
+   * Constructs a MeiliSearchService.
+   * @param {InjectedDependencies} args - Dependencies injected by the framework.
+   * @param {MeilisearchPluginOptions} options - Options for the plugin
+   * @throws {Error} - If the API key or host is missing in the plugin config
+   */
+  constructor({ query }, options: MeilisearchPluginOptions) {
+    super({ query }, options)
     this.config_ = options
-
+    this.query = query
     if (process.env.NODE_ENV !== 'development') {
       if (!options.config?.apiKey) {
         throw Error(
@@ -45,13 +51,13 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   async addDocuments(indexName: string, documents: any, type: string) {
     const transformedDocuments = this.getTransformedDocuments(type, documents)
 
-    return await this.client_.index(indexName).addDocuments(transformedDocuments, { primaryKey: 'id' })
+    return await this.client_.index(indexName).addDocuments(await transformedDocuments, { primaryKey: 'id' })
   }
 
   async replaceDocuments(indexName: string, documents: any, type: string) {
     const transformedDocuments = this.getTransformedDocuments(type, documents)
 
-    return await this.client_.index(indexName).addDocuments(transformedDocuments, { primaryKey: 'id' })
+    return await this.client_.index(indexName).addDocuments(await transformedDocuments, { primaryKey: 'id' })
   }
 
   async deleteDocument(indexName: string, documentId: string) {
@@ -92,19 +98,55 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     }
   }
 
-  getTransformedDocuments(type: string, documents: any[]) {
+  getTransformedDocuments(type: string, documents: any[]): any[] {
+    // Si no hay documentos, retornar un array vacío
     if (!documents?.length) {
       return []
     }
 
+    // Función para manejar la transformación de productos
+    const handleProductsTransformation = () => {
+      // Obtener el transformer desde la configuración o usar uno por defecto
+      const productsTransformer =
+        this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
+
+      // Crear el contenedor
+      // const container = createMedusaContainer()
+
+      // container.register('query', asValue({}))
+
+      // console.log('Contenedor creado:', container)
+
+      // Transformar los documentos en un solo paso
+      return documents.map((document) => {
+        const transformedData = { document, query: this.query }
+        return productsTransformer(transformedData)
+      })
+    }
+
+    // Manejar diferentes tipos de transformación
     switch (type) {
       case SearchUtils.indexTypes.PRODUCTS:
-        const productsTransformer =
-          this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
-
-        return documents.map(productsTransformer)
+        return handleProductsTransformation()
       default:
+        // Por defecto, retornar los documentos sin cambios
         return documents
     }
   }
+
+  // async getTransformedDocuments(type: string, documents: any[]) {
+  //   if (!documents?.length) {
+  //     return []
+  //   }
+
+  //   switch (type) {
+  //     case SearchUtils.indexTypes.PRODUCTS:
+  //       console.log('container in methods', { container })
+  //       const productsTransformer = transformProduct(documents, container)
+
+  //       return documents.map(await productsTransformer)
+  //     default:
+  //       return documents
+  //   }
+  // }
 }

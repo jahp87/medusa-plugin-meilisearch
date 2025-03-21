@@ -1,65 +1,23 @@
 import { LoaderOptions } from '@medusajs/types'
 import { MeiliSearchService } from '../services'
 import { MeilisearchPluginOptions } from '../types'
-import { asClass, asValue } from 'awilix'
-import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
+import { asValue } from 'awilix'
 
-export default async function meiliSearchLoader({
-  container,
-  options,
-}: LoaderOptions<MeilisearchPluginOptions>): Promise<void> {
+export default async ({ container, options }: LoaderOptions<MeilisearchPluginOptions>): Promise<void> => {
   if (!options) {
     throw new Error('Missing meilisearch configuration')
   }
-  const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
-  console.log('loading logger', logger)
 
-  // Función para resolver con reintentos
-  const resolveWithRetry = async (key, maxRetries = 10, delay = 1000) => {
-    let retries = 0
+  const meilisearchService: MeiliSearchService = new MeiliSearchService(container, options)
+  const { settings } = options
 
-    while (retries < maxRetries) {
-      try {
-        return container.resolve(key)
-      } catch (error) {
-        logger.warn(`Intento ${retries + 1}/${maxRetries} fallido para resolver ${key}: ${error.message}`)
-        retries++
+  container.register({
+    meilisearchService: asValue(meilisearchService),
+  })
 
-        if (retries >= maxRetries) {
-          throw error
-        }
-
-        // Esperar antes del siguiente intento
-        await new Promise((resolve) => setTimeout(resolve, delay))
-      }
-    }
-  }
-
-  try {
-    // Intentar resolver query con reintentos
-    const query = await resolveWithRetry(ContainerRegistrationKeys.QUERY)
-
-    container.register({
-      logger: asValue(logger),
-      query: asValue(query),
-      options: asValue(options),
-    })
-
-    container.register({
-      meilisearchService: asClass(MeiliSearchService).singleton(),
-    })
-
-    const { settings } = options
-
-    await Promise.all(
-      Object.entries(settings || {}).map(async ([indexName, value]) => {
-        return await (container.resolve('meilisearchService') as MeiliSearchService).updateSettings(indexName, value)
-      }),
-    )
-  } catch (error) {
-    logger.error(`No se pudo cargar la dependencia query: ${error.message}`)
-    throw error
-  }
+  await Promise.all(
+    Object.entries(settings || {}).map(async ([indexName, value]) => {
+      return await meilisearchService.updateSettings(indexName, value)
+    }),
+  )
 }
-
-meiliSearchLoader.priority = 10
