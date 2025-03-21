@@ -17,3 +17,9 @@ export interface MeilisearchPluginOptions {
     [key: string]: SearchTypes.IndexSettings
   }
 }
+
+// inject dependencies
+// export type InjectedDependencies = {
+//   logger: Logger
+//   query: any
+// }

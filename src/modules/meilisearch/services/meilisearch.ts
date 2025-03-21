@@ -1,32 +1,27 @@
-import { Logger, SearchTypes } from '@medusajs/types'
+import { SearchTypes } from '@medusajs/types'
 import { SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
 import { transformProduct } from '../utils/transformer'
 
-type InjectedDependencies = {
-  logger: Logger
-  query: any
-}
-
 export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   static identifier = 'index-meilisearch'
 
   isDefault = false
-
+  protected query: any
   protected readonly config_: MeilisearchPluginOptions
   protected readonly client_: MeiliSearch
-  protected logger: Logger
-  protected query: any
 
-  constructor(container: any, options: MeilisearchPluginOptions, { logger, query }: InjectedDependencies) {
-    super(container, options)
-    console.log('container in services', query)
-    console.log('*****************************************************************************************')
+  /**
+   * Constructs a MeiliSearchService.
+   * @param {InjectedDependencies} args - Dependencies injected by the framework.
+   * @param {MeilisearchPluginOptions} options - Options for the plugin
+   * @throws {Error} - If the API key or host is missing in the plugin config
+   */
+  constructor({ query }, options: MeilisearchPluginOptions) {
+    super({ query }, options)
     this.config_ = options
-    this.logger = logger
     this.query = query
-
     if (process.env.NODE_ENV !== 'development') {
       if (!options.config?.apiKey) {
         throw Error(
