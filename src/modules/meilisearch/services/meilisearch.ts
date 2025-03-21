@@ -14,7 +14,6 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
 
   /**
    * Constructs a MeiliSearchService.
-   * @param {InjectedDependencies} args - Dependencies injected by the framework.
    * @param {MeilisearchPluginOptions} options - Options for the plugin
    * @throws {Error} - If the API key or host is missing in the plugin config
    */
@@ -119,6 +118,8 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
       // Transformar los documentos en un solo paso
       return documents.map((document) => {
         const transformedData = { document, query: this.query }
+        console.log('plugin query', transformedData.query)
+        console.log('plugin document', transformedData.document)
         return productsTransformer(transformedData)
       })
     }
