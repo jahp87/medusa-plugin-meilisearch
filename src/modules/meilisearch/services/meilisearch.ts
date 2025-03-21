@@ -1,4 +1,4 @@
-import { Logger, MedusaContainer, SearchTypes } from '@medusajs/types'
+import { Logger, SearchTypes } from '@medusajs/types'
 import { SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
@@ -19,11 +19,7 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   protected logger: Logger
   protected query: any
 
-  constructor(
-    private container: MedusaContainer,
-    options: MeilisearchPluginOptions,
-    { logger, query }: InjectedDependencies,
-  ) {
+  constructor(container: any, options: MeilisearchPluginOptions, { logger, query }: InjectedDependencies) {
     super(container, options)
     console.log('container in services', query)
     console.log('*****************************************************************************************')
