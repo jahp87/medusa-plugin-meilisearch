@@ -1,20 +1,22 @@
-import { SearchTypes } from '@medusajs/types'
+import { MedusaContainer, SearchTypes } from '@medusajs/types'
 import { SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
 import { transformProduct } from '../utils/transformer'
+import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
+import { asValue } from 'awilix'
 
 export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   static identifier = 'index-meilisearch'
 
   isDefault = false
-
+  protected myContainer: MedusaContainer
   protected readonly config_: MeilisearchPluginOptions
   protected readonly client_: MeiliSearch
 
   constructor(container: any, options: MeilisearchPluginOptions) {
     super(container, options)
-
+    this.myContainer = container
     this.config_ = options
 
     if (process.env.NODE_ENV !== 'development') {
@@ -97,12 +99,34 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
       return []
     }
 
+    const handleProductsTransformation = () => {
+      // Obtener el transformer desde la configuración o usar uno por defecto
+      const productsTransformer =
+        this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
+
+      // Crear el contenedor
+      // const container = createMedusaContainer()
+
+      // container.register('query', asValue({}))
+
+      // console.log('Contenedor creado:', container)
+
+      // Transformar los documentos en un solo paso
+      const query = this.myContainer.resolve(ContainerRegistrationKeys.QUERY)
+      this.myContainer.register(ContainerRegistrationKeys.QUERY, asValue(query))
+
+      return documents.map((document) => {
+        const transformedData = { document, container: this.myContainer }
+        return productsTransformer(transformedData)
+      })
+    }
+
     switch (type) {
       case SearchUtils.indexTypes.PRODUCTS:
-        const productsTransformer =
-          this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
+        // const productsTransformer =
+        //   this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
 
-        return documents.map(productsTransformer)
+        return handleProductsTransformation()
       default:
         return documents
     }
