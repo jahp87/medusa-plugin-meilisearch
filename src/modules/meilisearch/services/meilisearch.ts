@@ -1,23 +1,20 @@
-import { MedusaContainer, SearchTypes } from '@medusajs/types'
+import { SearchTypes } from '@medusajs/types'
 import { SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
 import { transformProduct } from '../utils/transformer'
-import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
-import { asValue } from 'awilix'
+import { queryWorkflow } from 'src/workflows/query-workflow'
 
 export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   static identifier = 'index-meilisearch'
 
   isDefault = false
-  protected myContainer: MedusaContainer
+
   protected readonly config_: MeilisearchPluginOptions
   protected readonly client_: MeiliSearch
 
   constructor(container: any, options: MeilisearchPluginOptions) {
     super(container, options)
-    this.myContainer = container
-    this.config_ = options
 
     if (process.env.NODE_ENV !== 'development') {
       if (!options.config?.apiKey) {
@@ -36,6 +33,12 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     this.client_ = new MeiliSearch(options.config)
   }
 
+  async getQueryByWorkFlow() {
+    const { result } = await queryWorkflow().run()
+    console.log('resul workflow', result)
+    return result
+  }
+
   async createIndex(indexName: string, options: Record<string, unknown> = { primaryKey: 'id' }) {
     return await this.client_.createIndex(indexName, options)
   }
@@ -47,13 +50,13 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   async addDocuments(indexName: string, documents: any, type: string) {
     const transformedDocuments = this.getTransformedDocuments(type, documents)
 
-    return await this.client_.index(indexName).addDocuments(transformedDocuments, { primaryKey: 'id' })
+    return await this.client_.index(indexName).addDocuments(await transformedDocuments, { primaryKey: 'id' })
   }
 
   async replaceDocuments(indexName: string, documents: any, type: string) {
     const transformedDocuments = this.getTransformedDocuments(type, documents)
 
-    return await this.client_.index(indexName).addDocuments(transformedDocuments, { primaryKey: 'id' })
+    return await this.client_.index(indexName).addDocuments(await transformedDocuments, { primaryKey: 'id' })
   }
 
   async deleteDocument(indexName: string, documentId: string) {
@@ -94,12 +97,14 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     }
   }
 
-  getTransformedDocuments(type: string, documents: any[]) {
+  getTransformedDocuments(type: string, documents: any[]): any[] {
+    // Si no hay documentos, retornar un array vacío
     if (!documents?.length) {
       return []
     }
 
-    const handleProductsTransformation = () => {
+    // Función para manejar la transformación de productos
+    const handleProductsTransformation = async () => {
       // Obtener el transformer desde la configuración o usar uno por defecto
       const productsTransformer =
         this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
@@ -112,23 +117,38 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
       // console.log('Contenedor creado:', container)
 
       // Transformar los documentos en un solo paso
-      const query = this.myContainer.resolve(ContainerRegistrationKeys.QUERY)
-      this.myContainer.register(ContainerRegistrationKeys.QUERY, asValue(query))
 
+      const query = await this.getQueryByWorkFlow()
       return documents.map((document) => {
-        const transformedData = { document, container: this.myContainer }
+        const transformedData = { document, query: query }
+        console.log('transformed in plugin', transformedData.query)
         return productsTransformer(transformedData)
       })
     }
 
+    // Manejar diferentes tipos de transformación
     switch (type) {
       case SearchUtils.indexTypes.PRODUCTS:
-        // const productsTransformer =
-        //   this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
-
         return handleProductsTransformation()
       default:
+        // Por defecto, retornar los documentos sin cambios
         return documents
     }
   }
+
+  // async getTransformedDocuments(type: string, documents: any[]) {
+  //   if (!documents?.length) {
+  //     return []
+  //   }
+
+  //   switch (type) {
+  //     case SearchUtils.indexTypes.PRODUCTS:
+  //       console.log('container in methods', { container })
+  //       const productsTransformer = transformProduct(documents, container)
+
+  //       return documents.map(await productsTransformer)
+  //     default:
+  //       return documents
+  //   }
+  // }
 }
