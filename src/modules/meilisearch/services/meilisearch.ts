@@ -1,9 +1,14 @@
 import { SearchTypes } from '@medusajs/types'
-import { SearchUtils } from '@medusajs/utils'
+import { Modules, SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
+import { getProductWithPricesWorkflow } from 'src/workflows/get-product-workflow'
 //import { transformProduct } from '../utils/transformer'
 //import { queryWorkflow } from '../../../workflows/query-workflow'
+
+type InjectDependencies = {
+  [Modules.PRODUCT]: any
+}
 
 export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   static identifier = 'index-meilisearch'
@@ -13,11 +18,12 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   protected readonly config_: MeilisearchPluginOptions
   protected readonly client_: MeiliSearch
   protected productService_: any
+  protected container_: any
 
-  constructor({ productService }, options: MeilisearchPluginOptions) {
-    super({ productService }, options)
-    this.productService_ = productService
-
+  constructor({ [Modules.PRODUCT]: product }: InjectDependencies, options: MeilisearchPluginOptions) {
+    super({ product }, options)
+    this.productService_ = product
+    this.container_ = product
     this.config_ = options
 
     //this.container_ = container
@@ -40,19 +46,30 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     this.client_ = new MeiliSearch(options.config)
   }
 
-  async getProductWithCalculatedPrices(productId: string) {
-    try {
-      const product = await this.productService_.retrieve(productId, {
-        region_id: 'reg_01JN3PZX5Q2AJWKSTDMKCM543A',
-        currency_code: 'eur',
-        include_pricestax: true,
-      })
+  async getProductWithPrices(productId: string) {
+    const { result } = await getProductWithPricesWorkflow(this.container_).run({
+      input: {
+        productId: productId,
+        regionId: 'reg_01JN3PZX5Q2AJWKSTDMKCM543A',
+        currencyCode: 'eur',
+      },
+    })
 
-      return product
-    } catch (error) {
-      throw error
-    }
+    return result
   }
+  // async getProductWithCalculatedPrices(productId: string) {
+  //   try {
+  //     const product = await this.productService_.retrieve(productId, {
+  //       region_id: 'reg_01JN3PZX5Q2AJWKSTDMKCM543A',
+  //       currency_code: 'eur',
+  //       include_pricestax: true,
+  //     })
+
+  //     return product
+  //   } catch (error) {
+  //     throw error
+  //   }
+  // }
 
   // async getQueryByWorkFlow() {
   //   const { result } = await queryWorkflow().run()
@@ -158,7 +175,7 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
         //const transformedData = { document, query: queryQuery }
         // const transformedData = this.getProductWithCalculatedPrices(document.id)
         // return productsTransformer(transformedData)
-        return this.getProductWithCalculatedPrices(document.id)
+        return this.getProductWithPrices(document.id)
       })
     }
 
