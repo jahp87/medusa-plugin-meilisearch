@@ -1,13 +1,12 @@
-import { container } from '@medusajs/framework'
-import { createStep, StepResponse, createWorkflow, WorkflowResponse } from '@medusajs/framework/workflows-sdk'
-import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
+// import { createStep, StepResponse, createWorkflow, WorkflowResponse } from '@medusajs/framework/workflows-sdk'
+// import { ContainerRegistrationKeys } from '@medusajs/framework/utils'
 
-const step1 = createStep('step-1', async () => {
-  const query = container.resolve(ContainerRegistrationKeys.QUERY)
-  return new StepResponse(query)
-})
+// const getQueryStep = createStep('get-query-step', async (_, { container }) => {
+//   const query = container.resolve(ContainerRegistrationKeys.QUERY)
+//   return new StepResponse({ queryObject: query })
+// })
 
-export const queryWorkflow = createWorkflow('query-workflow', function () {
-  const query = step1()
-  return new WorkflowResponse(query)
-})
+// export const queryWorkflow = createWorkflow('query-workflow', function () {
+//   const result = getQueryStep()
+//   return new WorkflowResponse(result)
+// })

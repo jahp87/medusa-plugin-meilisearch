@@ -2,8 +2,8 @@ import { SearchTypes } from '@medusajs/types'
 import { SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
-import { transformProduct } from '../utils/transformer'
-import { queryWorkflow } from 'src/workflows/query-workflow'
+//import { transformProduct } from '../utils/transformer'
+//import { queryWorkflow } from '../../../workflows/query-workflow'
 
 export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   static identifier = 'index-meilisearch'
@@ -12,9 +12,16 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
 
   protected readonly config_: MeilisearchPluginOptions
   protected readonly client_: MeiliSearch
+  protected productService_: any
 
-  constructor(container: any, options: MeilisearchPluginOptions) {
-    super(container, options)
+  constructor({ productService }, options: MeilisearchPluginOptions) {
+    super({ productService }, options)
+    this.productService_ = productService
+
+    this.config_ = options
+
+    //this.container_ = container
+    // this.query_ = query
 
     if (process.env.NODE_ENV !== 'development') {
       if (!options.config?.apiKey) {
@@ -33,11 +40,25 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     this.client_ = new MeiliSearch(options.config)
   }
 
-  async getQueryByWorkFlow() {
-    const { result } = await queryWorkflow().run()
-    console.log('resul workflow', result)
-    return result
+  async getProductWithCalculatedPrices(productId: string) {
+    try {
+      const product = await this.productService_.retrieve(productId, {
+        region_id: 'reg_01JN3PZX5Q2AJWKSTDMKCM543A',
+        currency_code: 'eur',
+        include_pricestax: true,
+      })
+
+      return product
+    } catch (error) {
+      throw error
+    }
   }
+
+  // async getQueryByWorkFlow() {
+  //   const { result } = await queryWorkflow().run()
+  //   console.log('result workflow', result)
+  //   return result
+  // }
 
   async createIndex(indexName: string, options: Record<string, unknown> = { primaryKey: 'id' }) {
     return await this.client_.createIndex(indexName, options)
@@ -97,17 +118,28 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     }
   }
 
-  getTransformedDocuments(type: string, documents: any[]): any[] {
+  //getQuery() {
+  // if (!this.query_) {
+  //   this.query_ = this.container_.resolve(ContainerRegistrationKeys.QUERY)
+  // } else {
+  //   const logger = this.container_.resolve(ContainerRegistrationKeys.LOGGER)
+  //   logger.warn('Query not found')
+  //   return this.query_
+  // }
+  //   return this.query_
+  // }
+
+  getTransformedDocuments(type: string, documents: any[]): Promise<any[]> {
     // Si no hay documentos, retornar un array vacío
     if (!documents?.length) {
-      return []
+      return Promise.resolve([])
     }
 
     // Función para manejar la transformación de productos
     const handleProductsTransformation = async () => {
       // Obtener el transformer desde la configuración o usar uno por defecto
-      const productsTransformer =
-        this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
+      // const productsTransformer =
+      //   this.config_.settings?.[SearchUtils.indexTypes.PRODUCTS]?.transformer ?? transformProduct
 
       // Crear el contenedor
       // const container = createMedusaContainer()
@@ -117,12 +149,16 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
       // console.log('Contenedor creado:', container)
 
       // Transformar los documentos en un solo paso
-
-      const query = await this.getQueryByWorkFlow()
+      //const queryWorkflow = await this.getQueryByWorkFlow()
+      //const queryQuery = await this.getQuery()
+      //const queryContainer = this.query_
       return documents.map((document) => {
-        const transformedData = { document, query: query }
-        console.log('transformed in plugin', transformedData.query)
-        return productsTransformer(transformedData)
+        //const transformedData = { document, queryQuery: queryQuery, queryContainer: queryContainer }
+        //const transformedData = { document, query: queryWorkflow }
+        //const transformedData = { document, query: queryQuery }
+        // const transformedData = this.getProductWithCalculatedPrices(document.id)
+        // return productsTransformer(transformedData)
+        return this.getProductWithCalculatedPrices(document.id)
       })
     }
 
@@ -132,7 +168,7 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
         return handleProductsTransformation()
       default:
         // Por defecto, retornar los documentos sin cambios
-        return documents
+        return Promise.resolve(documents)
     }
   }
 
