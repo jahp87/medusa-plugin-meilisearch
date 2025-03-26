@@ -1,32 +1,23 @@
 import { LoaderOptions } from '@medusajs/types'
 import { MeiliSearchService } from '../services'
 import { MeilisearchPluginOptions } from '../types'
-import { asClass, asValue } from 'awilix'
+import { asValue } from 'awilix'
 
-//import meiliSearchLoader from './index_ho'
-
-export default async function meiliSearchLoader({
-  container,
-  options,
-}: LoaderOptions<MeilisearchPluginOptions>): Promise<void> {
+export default async ({ container, options }: LoaderOptions<MeilisearchPluginOptions>): Promise<void> => {
   if (!options) {
     throw new Error('Missing meilisearch configuration')
   }
 
-  const logger = container.resolve('logger')
-
-  //logger.info('MeiliSearch loader executed - waiting for system ready event')
-
-  //const meilisearch = new MeiliSearchService(container, options)
-  // Registra las opciones y una versión inicial del servicio
-  container.register({
-    meilisearchOptions: asValue(options),
-  })
+  const meilisearchService: MeiliSearchService = new MeiliSearchService(container, options)
+  const { settings } = options
 
   container.register({
-    meilisearchService: asClass(MeiliSearchService).singleton(),
+    meilisearchService: asValue(meilisearchService),
   })
-  logger.info('MeiliSearch loader executed - waiting for system ready event')
+
+  await Promise.all(
+    Object.entries(settings || {}).map(async ([indexName, value]) => {
+      return await meilisearchService.updateSettings(indexName, value)
+    }),
+  )
 }
-
-meiliSearchLoader.priority = 500
