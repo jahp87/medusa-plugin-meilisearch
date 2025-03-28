@@ -2,8 +2,7 @@ import { SearchTypes } from '@medusajs/types'
 import { SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
-import { transformProduct } from '../utils/transformer'
-import { getProductWithPricesWorkflow } from 'src/workflows/get-product-workflow'
+import { getProductWithPricesWorkflow } from '../../../workflows/get-product-workflow'
 
 export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   static identifier = 'index-meilisearch'
@@ -13,6 +12,7 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   protected readonly config_: MeilisearchPluginOptions
   protected readonly client_: MeiliSearch
   protected container_: any
+
   constructor(container: any, options: MeilisearchPluginOptions) {
     super(container, options)
 
@@ -32,6 +32,8 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
         'Meilisearch host is missing in plugin config. See https://github.com/rokmohar/medusa-plugin-meilisearch',
       )
     }
+
+    console.log('options', options.config)
 
     this.client_ = new MeiliSearch(options.config)
   }
