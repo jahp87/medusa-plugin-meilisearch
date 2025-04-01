@@ -4,6 +4,10 @@ import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
 import { getProductWithPricesWorkflow } from '../../../workflows/get-product-workflow'
 
+type InjectDependencies = {
+  container: any
+  options: MeilisearchPluginOptions
+}
 export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   static identifier = 'index-meilisearch'
 
@@ -13,7 +17,7 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
   protected readonly client_: MeiliSearch
   protected container_: any
 
-  constructor(container: any, options: MeilisearchPluginOptions) {
+  constructor({ container, options }: InjectDependencies) {
     super(container, options)
 
     this.config_ = options
@@ -32,8 +36,6 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
         'Meilisearch host is missing in plugin config. See https://github.com/rokmohar/medusa-plugin-meilisearch',
       )
     }
-
-    console.log('options', options.config)
 
     this.client_ = new MeiliSearch(options.config)
   }
@@ -115,7 +117,8 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
 
     const handleProductsTransformation = () => {
       return documents.map((document) => {
-        return this.getProductWithPrices(document.id)
+        //return this.getProductWithPrices(document.id)
+        return document
       })
     }
 

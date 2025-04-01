@@ -10,6 +10,11 @@ export interface MeilisearchPluginOptions {
    * Meilisearch client configuration
    */
   config: Config
+
+  regionId: string
+
+  currencyCode: string
+
   /**
    * Index settings
    */
