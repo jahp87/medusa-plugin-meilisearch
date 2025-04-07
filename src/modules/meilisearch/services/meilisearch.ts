@@ -2,7 +2,6 @@ import { SearchTypes } from '@medusajs/types'
 import { SearchUtils } from '@medusajs/utils'
 import { MeiliSearch, Settings } from 'meilisearch'
 import { meilisearchErrorCodes, MeilisearchPluginOptions } from '../types'
-import { getProductWithPricesWorkflow } from '../../../workflows/get-product-workflow'
 
 type InjectDependencies = {
   container: any
@@ -98,18 +97,6 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
     }
   }
 
-  async getProductWithPrices(productId: string) {
-    const { result } = await getProductWithPricesWorkflow(this.container_).run({
-      input: {
-        productId: productId,
-        regionId: 'reg_01JN3PZX5Q2AJWKSTDMKCM543A',
-        currencyCode: 'eur',
-      },
-    })
-
-    return result
-  }
-
   getTransformedDocuments(type: string, documents: any[]) {
     if (!documents?.length) {
       return []
@@ -117,7 +104,6 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
 
     const handleProductsTransformation = () => {
       return documents.map((document) => {
-        //return this.getProductWithPrices(document.id)
         return document
       })
     }

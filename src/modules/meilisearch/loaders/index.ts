@@ -8,7 +8,6 @@ export default async ({ container, options }: LoaderOptions<MeilisearchPluginOpt
     throw new Error('Missing meilisearch configuration')
   }
 
-  //const meilisearchService: MeiliSearchService = new MeiliSearchService(container, options)
   const { settings } = options
 
   container.register({
