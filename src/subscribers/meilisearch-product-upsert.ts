@@ -15,28 +15,6 @@ export default async function meilisearchProductUpsertHandler({
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
   logger.info(`data ${data.id}`)
 
-  // let type: string = ''
-  // let array_id: string[] = []
-  // if (Array.isArray(data.id) && data.id.length > 0) {
-  //   type = data.id[0].split('_')[0]
-  //   array_id = data.id
-  // } else {
-  //   type = data.id.split('_')[0]
-
-  //   array_id = [data.id]
-  // }
-
-  //if ((await getProductsByPrefix(type as PrefixTypeEnum, query, id, logger)).length === 0) {\
-  // if (type == PrefixTypeEnum.prod) {
-  //   productList = array_id
-  // } else {
-  //   // Si el ID del producto empieza con "res" o "iitem", obtenemos la lista de productos
-  //   const reponse_products = await getProductsByPrefix(type as PrefixTypeEnum, query, array_id, logger)
-
-  //   productList = reponse_products
-  // }
-  //************************************************************************************************
-
   const meilisearchService: MeiliSearchService = container.resolve('meilisearch')
 
   logger.info('search all product')
@@ -79,7 +57,6 @@ export default async function meilisearchProductUpsertHandler({
         }),
       },
     })
-    console.log('variants', variants)
     const updatedVariants: any[] = []
 
     for (const variant of variants) {
