@@ -104,7 +104,9 @@ export class MeiliSearchService extends SearchUtils.AbstractSearchService {
 
     const handleProductsTransformation = () => {
       return documents.map((document) => {
-        return document
+        if (document?.variants && document.variants.length > 0) {
+          return document
+        }
       })
     }
 
