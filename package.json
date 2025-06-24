@@ -1,6 +1,6 @@
 {
   "name": "@jahp87/medusa-plugin-meilisearch",
-  "version": "1.2.52",
+  "version": "1.2.62",
   "description": "Medusa plugin for Meilisearch integration for Medusa 2",
   "author": "Julio Hernandez <jahp8719@gmail.com>",
   "license": "MIT",
@@ -30,6 +30,8 @@
     "format:fix": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --cache --cache-strategy content --log-level warn"
   },
   "dependencies": {
+    "@medusajs/js-sdk": "^2.8.4",
+    "@medusajs/types": "^2.8.4",
     "meilisearch": "^0.48.2"
   },
   "devDependencies": {

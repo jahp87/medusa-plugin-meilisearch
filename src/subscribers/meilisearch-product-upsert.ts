@@ -2,14 +2,12 @@ import { SubscriberArgs, SubscriberConfig } from '@medusajs/framework'
 import { ContainerRegistrationKeys, ProductEvents, InventoryEvents, PricingEvents, SearchUtils } from '@medusajs/utils'
 import { MeiliSearchService } from '../modules/meilisearch'
 import { QueryContext } from '@medusajs/framework/utils'
-// import { getProductsByPrefix, PrefixTypeEnum } from '../utils'
-//import { PrefixTypeEnum } from '../utils'
+// import Medusa from '@medusajs/js-sdk'
 
 export default async function meilisearchProductUpsertHandler({
   event: { data },
   container,
 }: SubscriberArgs<{ id: string }>) {
-  // let productList: string[] = []
   const query = container.resolve(ContainerRegistrationKeys.QUERY)
   //*******************************************************************
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
@@ -17,22 +15,34 @@ export default async function meilisearchProductUpsertHandler({
 
   const meilisearchService: MeiliSearchService = container.resolve('meilisearch')
 
+  // sdk.admin.product.listOptions('prod_123').then(({ product_options }) => {
+  //   console.log(product_options)
+  // })
+  // sdk.admin.product.listVariants('prod_123').then(({ variants }) => {
+  //   console.log(variants)
+  // })
+
+  // const sdk = new Medusa({
+  //   baseUrl: process.env.MEDUSA_BACKEND_URL || 'localhost:8000', // URL de tu backend de Medusa
+  //   debug: process.env.ENV === 'development',
+  // })
+
   logger.info('search all product')
   const { data: products } = await query.graph({
     entity: 'product',
     fields: [
       '*', // Todos los campos del producto
       'options.*',
+      'options.values.*',
       'images.*',
       'tags.*',
       'categories.*',
       'variants.*',
+      'variants.options.*',
       'variants.calculated_price.*',
       'variants.inventory_items.*',
     ],
-    // filters: {
-    //   id: [productList], // Filtrar por el ID del producto
-    // },
+
     context: {
       variants: {
         calculated_price: QueryContext({
@@ -44,11 +54,15 @@ export default async function meilisearchProductUpsertHandler({
   })
 
   for (const product of products) {
+    //product.options = sdk.admin.product.listOptions(product.id)
+
     const { data: variants } = await query.graph({
       entity: 'product_variant',
       fields: [
         '*',
         'calculated_price.*',
+        'options.*',
+        'options.option.*', // Esto trae los detalles de la opción (por ejemplo, título)
         'inventory_items.*',
         'inventory_items.inventory.location_levels.stocked_quantity',
         'inventory_items.inventory.location_levels.reserved_quantity',
@@ -67,29 +81,17 @@ export default async function meilisearchProductUpsertHandler({
 
     for (const variant of variants) {
       let inventoryQuantity = 0
-
-      // if (variant.inventory_items?.length > 0) {
-      //   const inventoryItemId = variant.inventory_items[0].inventory_item_id
-
-      //   const { data: inventoryLevels } = await query.graph({
-      //     entity: 'inventory_level',
-      //     fields: ['*', 'available_quantity'],
-      //     filters: {
-      //       inventory_item_id: inventoryItemId,
-      //     },
-      //   })
-
-      //   inventoryQuantity = inventoryLevels.length > 0 ? inventoryLevels[0].available_quantity : 0
-      //   console.log('inventoryQuantity', inventoryQuantity)
-      // }
-
-      inventoryQuantity = calculateInventoryQuantity(variant)
-
-      // Asignamos el valor a la variante
-      updatedVariants.push({
-        ...variant,
-        inventory_quantity: inventoryQuantity,
-      })
+      // const variants = await sdk.admin.product.listVariants(variant.id)
+      // variant.options = variants[0].options
+      if (variant.inventory_items !== undefined) {
+        inventoryQuantity = calculateInventoryQuantity(variant)
+        updatedVariants.push({
+          ...variant,
+          inventory_quantity: inventoryQuantity,
+        })
+      } else {
+        updatedVariants.push(...variant)
+      }
     }
 
     // // 🔁 Asignamos las variantes actualizadas al producto
@@ -121,6 +123,12 @@ export default async function meilisearchProductUpsertHandler({
 
 export const config: SubscriberConfig = {
   event: [
+    ProductEvents.PRODUCT_VARIANT_ATTACHED,
+    ProductEvents.PRODUCT_VARIANT_CREATED,
+    ProductEvents.PRODUCT_VARIANT_DELETED,
+    ProductEvents.PRODUCT_VARIANT_UPDATED,
+    ProductEvents.PRODUCT_VARIANT_DETACHED,
+    ProductEvents.PRODUCT_VARIANT_RESTORED,
     ProductEvents.PRODUCT_CREATED,
     ProductEvents.PRODUCT_UPDATED,
     ProductEvents.PRODUCT_DELETED,
@@ -130,6 +138,7 @@ export const config: SubscriberConfig = {
     InventoryEvents.INVENTORY_LEVEL_CREATED,
 
     InventoryEvents.INVENTORY_ITEM_UPDATED,
+
     InventoryEvents.RESERVATION_ITEM_UPDATED,
     InventoryEvents.INVENTORY_LEVEL_UPDATED,
 
@@ -184,6 +193,7 @@ export const config: SubscriberConfig = {
     PricingEvents.PRICE_RULE_DETACHED,
     PricingEvents.PRICE_SET_DETACHED,
     PricingEvents.PRICE_DETACHED,
+    'product-review.created',
   ],
 }
 
