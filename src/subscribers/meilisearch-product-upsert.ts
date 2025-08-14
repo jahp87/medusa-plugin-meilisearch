@@ -77,21 +77,14 @@ export default async function meilisearchProductUpsertHandler({
         }),
       },
     })
-    const updatedVariants: any[] = []
+    let updatedVariants: any[] = []
 
-    for (const variant of variants) {
-      let inventoryQuantity = 0
-      // const variants = await sdk.admin.product.listVariants(variant.id)
-      // variant.options = variants[0].options
-      if (variant.inventory_items !== undefined) {
-        inventoryQuantity = calculateInventoryQuantity(variant)
-        updatedVariants.push({
-          ...variant,
-          inventory_quantity: inventoryQuantity,
-        })
-      } else {
-        updatedVariants.push(...variant)
-      }
+    if (variants && variants.length > 0) {
+      // Producto con variantes - procesar normalmente
+      updatedVariants = variants.map((variant) => ({
+        ...variant,
+        inventory_quantity: variant.inventory_items ? calculateInventoryQuantity(variant) : 0,
+      }))
     }
 
     // // 🔁 Asignamos las variantes actualizadas al producto
@@ -193,7 +186,7 @@ export const config: SubscriberConfig = {
     PricingEvents.PRICE_RULE_DETACHED,
     PricingEvents.PRICE_SET_DETACHED,
     PricingEvents.PRICE_DETACHED,
-    'product-review.created',
+    'product-review.updated-status',
   ],
 }
 
