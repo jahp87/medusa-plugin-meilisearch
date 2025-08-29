@@ -195,9 +195,9 @@ function calculateInventoryQuantity(variant: any): number {
 
   const checkedInventory = variant.inventory_items.filter((invItem: any) => {
     return (
-      invItem.location_levels &&
-      (invItem.location_levels.length === 0 ||
-        invItem.location_levels.reduce((sum, level) => {
+      invItem.inventory.location_levels &&
+      (invItem.inventory.location_levels.length === 0 ||
+        invItem.inventory.location_levels.reduce((sum, level) => {
           return sum + ((level.stocked_quantity || 0) - (level.reserved_quantity || 0))
         }, 0) == 0)
     )
