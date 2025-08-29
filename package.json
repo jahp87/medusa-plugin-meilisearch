@@ -1,6 +1,6 @@
 {
   "name": "@jahp87/medusa-plugin-meilisearch",
-  "version": "1.2.66",
+  "version": "1.2.67",
   "description": "Medusa plugin for Meilisearch integration for Medusa 2",
   "author": "Julio Hernandez <jahp8719@gmail.com>",
   "license": "MIT",

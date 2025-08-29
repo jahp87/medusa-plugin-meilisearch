@@ -193,6 +193,19 @@ export const config: SubscriberConfig = {
 function calculateInventoryQuantity(variant: any): number {
   if (!variant.inventory_items) return 0
 
+  const checkedInventory = variant.inventory_items.filter((invItem: any) => {
+    return (
+      invItem.location_levels &&
+      (invItem.location_levels.length === 0 ||
+        invItem.location_levels.reduce((sum, level) => {
+          return sum + ((level.stocked_quantity || 0) - (level.reserved_quantity || 0))
+        }, 0) == 0)
+    )
+  })
+
+  if (checkedInventory.length > 0) {
+    return 0
+  }
   return variant.inventory_items.reduce((total, invItem) => {
     if (!invItem.inventory?.location_levels) return total
 
